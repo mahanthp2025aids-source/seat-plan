@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeatPlan — Exam Hall Seating Arrangement Generator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="nav-brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-chair"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">SeatPlan</span>
+                    <span class="brand-subtitle">Exam Seating Engine</span>
+                </div>
+            </div>
+
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </button>
+                <button class="tab-btn" data-tab="halls">
+                    <i class="fa-solid fa-building-columns"></i> Halls & Seats
+                </button>
+                <button class="tab-btn" data-tab="students">
+                    <i class="fa-solid fa-user-graduate"></i> Students
+                </button>
+                <button class="tab-btn" data-tab="exams">
+                    <i class="fa-solid fa-file-pen"></i> Exam Sessions
+                </button>
+                <button class="tab-btn" data-tab="seating">
+                    <i class="fa-solid fa-border-all"></i> Seating Chart
+                </button>
+                <button class="tab-btn" data-tab="lookup">
+                    <i class="fa-solid fa-magnifying-glass-location"></i> Seat Lookup
+                </button>
+            </nav>
+
+            <div class="nav-actions">
+                <a href="/swagger-ui.html" target="_blank" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-code"></i> Swagger API
+                </a>
+                <div class="server-status" id="serverStatus">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">Live Server</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Toast Notification Container -->
+            <div id="toastContainer" class="toast-container"></div>
+
+            <!-- ==================== TAB 1: DASHBOARD ==================== -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="section-header">
+                    <div>
+                        <h2>System Overview</h2>
+                        <p>Real-time statistics for examination halls, registered students, and active seating arrangements.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="refreshDashboard()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh Stats
+                    </button>
+                </div>
+
+                <!-- Metric Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card indigo">
+                        <div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statHalls">0</span>
+                            <span class="stat-label">Registered Halls</span>
+                        </div>
+                    </div>
+                    <div class="stat-card cyan">
+                        <div class="stat-icon"><i class="fa-solid fa-chair"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statSeats">0</span>
+                            <span class="stat-label">Total Seat Capacity</span>
+                        </div>
+                    </div>
+                    <div class="stat-card emerald">
+                        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statStudents">0</span>
+                            <span class="stat-label">Registered Students</span>
+                        </div>
+                    </div>
+                    <div class="stat-card amber">
+                        <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statExams">0</span>
+                            <span class="stat-label">Exam Sessions</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Dashboard Banner -->
+                <div class="banner-card">
+                    <div class="banner-content">
+                        <span class="badge badge-glow"><i class="fa-solid fa-bolt"></i> Automated Allocation</span>
+                        <h3>Exam Seating Generator Engine</h3>
+                        <p>SeatPlan automatically distributes registered students into halls while guaranteeing adjacent students belong to different sections/branches.</p>
+                        <div class="banner-buttons">
+                            <button class="btn btn-primary btn-lg" onclick="switchTab('seating')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Open Seating Generator
+                            </button>
+                            <button class="btn btn-secondary btn-lg" onclick="switchTab('lookup')">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search Student Seat
+                            </button>
+                        </div>
+                    </div>
+                    <div class="banner-graphic">
+                        <div class="mini-grid">
+                            <span class="cell sec-csea">CSE-A</span>
+                            <span class="cell sec-ecea">ECE-A</span>
+                            <span class="cell sec-cseb">CSE-B</span>
+                            <span class="cell sec-eceb">ECE-B</span>
+                            <span class="cell sec-cseb">CSE-B</span>
+                            <span class="cell sec-eeea">EEE-A</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 2: HALLS ==================== -->
+            <section id="tab-halls" class="tab-content">
+                <div class="grid-two-columns">
+                    <!-- Form Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-plus-circle"></i> Register Examination Hall</h3>
+                        </div>
+                        <form id="hallForm" onsubmit="handleCreateHall(event)">
+                            <div class="form-group">
+                                <label for="hallNumber">Hall Number / Code *</label>
+                                <input type="text" id="hallNumber" placeholder="e.g. H101" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="hallName">Hall Name *</label>
+                                <input type="text" id="hallName" placeholder="e.g. Main Examination Hall" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="hallRows">Rows *</label>
+                                    <input type="number" id="hallRows" min="1" max="20" placeholder="5" required onchange="calculateCapacityPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hallCols">Columns *</label>
+                                    <input type="number" id="hallCols" min="1" max="20" placeholder="6" required onchange="calculateCapacityPreview()">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="hallCapacity">Seat Capacity *</label>
+                                <input type="number" id="hallCapacity" min="1" placeholder="30" required>
+                                <small class="help-text">Capacity cannot exceed Rows × Columns.</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Hall & Auto-Create Seats
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Halls List Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-list-check"></i> Registered Halls</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="loadHalls()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hall #</th>
+                                        <th>Name</th>
+                                        <th>Dimensions</th>
+                                        <th>Capacity</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hallsTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted">Loading halls...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 3: STUDENTS ==================== -->
+            <section id="tab-students" class="tab-content">
+                <div class="grid-two-columns">
+                    <!-- Student Registration Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-user-plus"></i> Register Student</h3>
+                        </div>
+                        <form id="studentForm" onsubmit="handleCreateStudent(event)">
+                            <div class="form-group">
+                                <label for="rollNumber">Roll Number *</label>
+                                <input type="text" id="rollNumber" placeholder="e.g. 23CS101" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="studentName">Full Name *</label>
+                                <input type="text" id="studentName" placeholder="e.g. Arun Kumar" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="className">Class / Branch *</label>
+                                    <input type="text" id="className" placeholder="e.g. CSE" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="section">Section *</label>
+                                    <input type="text" id="section" placeholder="e.g. A" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-user-check"></i> Save Student
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Students List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-graduation-cap"></i> Registered Students</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="loadStudents()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Roll Number</th>
+                                        <th>Name</th>
+                                        <th>Class</th>
+                                        <th>Section</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted">Loading students...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 4: EXAMS ==================== -->
+            <section id="tab-exams" class="tab-content">
+                <div class="grid-two-columns">
+                    <!-- Create Exam Session -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-calendar-plus"></i> Create Exam Session</h3>
+                        </div>
+                        <form id="examForm" onsubmit="handleCreateExam(event)">
+                            <div class="form-group">
+                                <label for="examName">Exam Title *</label>
+                                <input type="text" id="examName" placeholder="e.g. Semester Examination" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="examSubject">Subject *</label>
+                                <input type="text" id="examSubject" placeholder="e.g. Database Management Systems" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="examDate">Date *</label>
+                                <input type="date" id="examDate" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="startTime">Start Time *</label>
+                                    <input type="time" id="startTime" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="endTime">End Time *</label>
+                                    <input type="time" id="endTime" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-calendar-check"></i> Create Exam Session
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Exam Sessions List & Student Registration Panel -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-clock-history"></i> Active Exam Sessions</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Exam Title</th>
+                                        <th>Subject</th>
+                                        <th>Date & Time</th>
+                                        <th>Registered</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="examsTableBody">
+                                    <tr><td colspan="6" class="text-center text-muted">Loading exams...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Bulk Register Modal / Section -->
+                        <div id="registerStudentsPanel" class="sub-panel" style="display: none;">
+                            <hr class="divider">
+                            <div class="panel-header">
+                                <h4><i class="fa-solid fa-user-check"></i> Register Students for Exam Session #<span id="selectedExamIdDisplay"></span></h4>
+                                <button class="btn btn-sm btn-outline" onclick="closeRegisterPanel()">Close</button>
+                            </div>
+                            <p class="text-muted">Select students below to enroll them for this exam session:</p>
+                            <div class="registration-student-list" id="registrationStudentCheckboxes">
+                                <!-- Checkboxes -->
+                            </div>
+                            <div class="panel-footer">
+                                <button class="btn btn-secondary btn-sm" onclick="selectAllStudentsToRegister(true)">Select All</button>
+                                <button class="btn btn-secondary btn-sm" onclick="selectAllStudentsToRegister(false)">Deselect All</button>
+                                <button class="btn btn-primary" onclick="submitExamRegistration()">Confirm Registrations</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 5: SEATING CHART GENERATOR ==================== -->
+            <section id="tab-seating" class="tab-content">
+                <!-- Top Execution Toolbar -->
+                <div class="card toolbar-card">
+                    <div class="toolbar-flex">
+                        <div class="toolbar-select">
+                            <label for="seatingExamSelect">Select Exam Session:</label>
+                            <select id="seatingExamSelect" class="form-control" onchange="handleExamSelectChange()"></select>
+                        </div>
+                        <div class="toolbar-buttons">
+                            <button class="btn btn-emerald btn-lg" onclick="triggerGenerateSeating()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Seating
+                            </button>
+                            <button class="btn btn-amber" onclick="triggerRegenerateSeating()">
+                                <i class="fa-solid fa-rotate-right"></i> Regenerate
+                            </button>
+                            <button class="btn btn-secondary" onclick="triggerPrintChart()">
+                                <i class="fa-solid fa-print"></i> Print Seating Chart
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="seatingStatusAlert" class="alert-box" style="display: none;"></div>
+                </div>
+
+                <!-- Seating Grid Rendering Container -->
+                <div id="seatingChartContainer" class="seating-charts-wrapper">
+                    <div class="placeholder-box">
+                        <i class="fa-solid fa-border-all placeholder-icon"></i>
+                        <h3>Select an Exam Session and click "Generate Seating"</h3>
+                        <p>The system will automatically assign seats across halls, strictly preventing same-section student adjacency.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 6: STUDENT SEAT LOOKUP ==================== -->
+            <section id="tab-lookup" class="tab-content">
+                <div class="card lookup-card">
+                    <div class="card-header text-center">
+                        <h2><i class="fa-solid fa-magnifying-glass-location"></i> Student Seat Allocation Search</h2>
+                        <p>Enter a student's roll number to find their assigned hall, seat number, row, and column.</p>
+                    </div>
+
+                    <form id="lookupForm" onsubmit="handleLookupStudent(event)" class="lookup-form">
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label for="lookupRollNumber">Student Roll Number</label>
+                                <input type="text" id="lookupRollNumber" placeholder="e.g. 23CS101" required>
+                            </div>
+                            <div class="form-group flex-2">
+                                <label for="lookupExamSelect">Exam Session</label>
+                                <select id="lookupExamSelect" required></select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa-solid fa-search"></i> Search Ticket
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Ticket Display Result Container -->
+                    <div id="lookupResultContainer"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script src="/js/app.js"></script>
+</body>
+</html>
